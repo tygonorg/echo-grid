@@ -41,8 +41,9 @@ public struct LevelGenerator: Sendable {
     public func generateLevel(seed: UInt64, title: String, id: Int = 9999) -> LevelDefinition {
         var rng = SeededRandomGenerator(seed: seed)
 
-        // Select Rule Family based on seed: 0 = Vertical, 1 = Horizontal, 2 = Collinear, 3 = Vertical + Collinear
-        let ruleChoice = rng.nextInt(in: 0...3)
+        // Select Rule Family based on seed:
+        // 0 = Vertical, 1 = Horizontal, 2 = Collinear, 3 = Rotational, 4 = Manhattan Distance, 5 = Blocker + Vertical
+        let ruleChoice = rng.nextInt(in: 0...5)
         let gridSize = 5
 
         var sources: [NodeState] = []
@@ -119,10 +120,29 @@ public struct LevelGenerator: Sendable {
             subtitle = "Cast all points into a single beam of light"
             let nodeCount = 3
             for i in 0..<nodeCount {
-                var r = (i * 2 + 1) % 5
-                var c = (i * 2 + 3) % 5
+                let r = (i * 2 + 1) % 5
+                let c = (i * 2 + 3) % 5
                 movables.append(NodeState(id: "M\(i + 1)", type: .receiver, position: CellPosition(row: r, col: c)))
             }
+            parMoves = 4
+
+        case 3:
+            // Rotational Symmetry 180°
+            rules = [RotationalSymmetryRule()]
+            subtitle = "Seek rotational harmony across the center point"
+            sources.append(NodeState(id: "S1", type: .source, position: CellPosition(row: 0, col: 1)))
+            sources.append(NodeState(id: "S2", type: .source, position: CellPosition(row: 1, col: 0)))
+            movables.append(NodeState(id: "M1", type: .receiver, position: CellPosition(row: 3, col: 2)))
+            movables.append(NodeState(id: "M2", type: .receiver, position: CellPosition(row: 2, col: 4)))
+            parMoves = 5
+
+        case 4:
+            // Manhattan Distance Rule
+            rules = [ManhattanDistanceRule(targetDistance: 2)]
+            subtitle = "Maintain equal harmonic wavelength of 2 steps"
+            sources.append(NodeState(id: "S1", type: .source, position: CellPosition(row: 2, col: 2)))
+            movables.append(NodeState(id: "M1", type: .receiver, position: CellPosition(row: 0, col: 0)))
+            movables.append(NodeState(id: "M2", type: .receiver, position: CellPosition(row: 4, col: 4)))
             parMoves = 4
 
         default:

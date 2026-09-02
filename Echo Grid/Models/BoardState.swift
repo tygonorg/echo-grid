@@ -43,19 +43,4 @@ public struct BoardState: Hashable, Codable, Sendable {
     public var blockerNodes: [NodeState] {
         nodes.filter { $0.type == .blocker }
     }
-
-    /// Factory for the Phase 0 standard validation layout
-    public static func makePhase0ValidationOpening() -> BoardState {
-        let sources = [
-            NodeState(id: "S1", type: .source, position: CellPosition(row: 0, col: 0), isLocked: true),
-            NodeState(id: "S2", type: .source, position: CellPosition(row: 2, col: 1), isLocked: true),
-            NodeState(id: "S3", type: .source, position: CellPosition(row: 4, col: 0), isLocked: true)
-        ]
-        let movables = [
-            NodeState(id: "M1", type: .receiver, position: CellPosition(row: 1, col: 3), isLocked: false),
-            NodeState(id: "M2", type: .receiver, position: CellPosition(row: 3, col: 4), isLocked: false),
-            NodeState(id: "M3", type: .receiver, position: CellPosition(row: 4, col: 2), isLocked: false)
-        ]
-        return BoardState(size: 5, nodes: sources + movables)
-    }
 }

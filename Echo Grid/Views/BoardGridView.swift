@@ -8,6 +8,7 @@ import Combine
 
 public struct BoardGridView: View {
     @ObservedObject var controller: GameplaySessionController
+    @ObservedObject private var thermalGuard = ThermalBatteryGuard.shared
     private let gridSize: Int = 5
 
     public init(controller: GameplaySessionController) {
@@ -29,8 +30,8 @@ public struct BoardGridView: View {
                             .stroke(Color(white: 0.22), lineWidth: 1.5)
                     )
 
-                // Visual Enhancement: Vertical Symmetry Axis Glow (Full Sensory mode only)
-                if controller.feedbackMode.hasVisualEnhancements {
+                // Visual Enhancement: Vertical Symmetry Axis Glow (Full Sensory mode only, throttled if hot)
+                if controller.feedbackMode.hasVisualEnhancements && !thermalGuard.isThrottled {
                     Rectangle()
                         .fill(
                             LinearGradient(
@@ -83,7 +84,8 @@ public struct BoardGridView: View {
                         node: node,
                         gridSize: gridSize,
                         cellSize: cellSize,
-                        controller: controller
+                        controller: controller,
+                        isThrottled: thermalGuard.isThrottled
                     )
                 }
             }
@@ -101,6 +103,7 @@ private struct DraggableNodeView: View {
     let gridSize: Int
     let cellSize: CGFloat
     @ObservedObject var controller: GameplaySessionController
+    let isThrottled: Bool
 
     @GestureState private var dragTranslation: CGSize = .zero
 
@@ -116,12 +119,25 @@ private struct DraggableNodeView: View {
             cellSize: cellSize,
             isDragging: isDragging,
             isFullSensory: controller.feedbackMode.hasVisualEnhancements,
+            isThrottled: isThrottled,
             resonanceScore: controller.latestResonanceScore
         )
         .position(x: baseCenter.x + dragTranslation.width, y: baseCenter.y + dragTranslation.height)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityNodeLabel(for: node))
-        .accessibilityHint(node.type == .receiver ? "Drag to move this resonance point" : "Fixed position")
+        .accessibilityHint(node.type == .receiver ? "Drag or use actions to move this resonance point" : "Fixed position")
+        .accessibilityAction(named: "Move Up") {
+            moveAccessible(deltaRow: -1, deltaCol: 0)
+        }
+        .accessibilityAction(named: "Move Down") {
+            moveAccessible(deltaRow: 1, deltaCol: 0)
+        }
+        .accessibilityAction(named: "Move Left") {
+            moveAccessible(deltaRow: 0, deltaCol: -1)
+        }
+        .accessibilityAction(named: "Move Right") {
+            moveAccessible(deltaRow: 0, deltaCol: 1)
+        }
         .gesture(
             node.isLocked ? nil : DragGesture()
                 .updating($dragTranslation) { value, state, _ in
@@ -141,6 +157,16 @@ private struct DraggableNodeView: View {
                     }
                 }
         )
+    }
+
+    private func moveAccessible(deltaRow: Int, deltaCol: Int) {
+        guard !node.isLocked else { return }
+        let newRow = max(0, min(gridSize - 1, node.position.row + deltaRow))
+        let newCol = max(0, min(gridSize - 1, node.position.col + deltaCol))
+        let targetCell = CellPosition(row: newRow, col: newCol)
+        withAnimation(.spring(response: 0.22, dampingFraction: 0.8)) {
+            controller.moveNode(nodeId: node.id, to: targetCell)
+        }
     }
 
     private func accessibilityNodeLabel(for node: NodeState) -> String {
@@ -189,6 +215,7 @@ private struct NodeItemView: View {
     let cellSize: CGFloat
     let isDragging: Bool
     let isFullSensory: Bool
+    let isThrottled: Bool
     let resonanceScore: Double
 
     var body: some View {
@@ -225,7 +252,7 @@ private struct NodeItemView: View {
                     )
 
             case .receiver:
-                if isFullSensory {
+                if isFullSensory && !isThrottled {
                     Circle()
                         .fill(
                             RadialGradient(

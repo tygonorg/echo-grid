@@ -10,6 +10,11 @@ import Combine
 @MainActor
 public final class DailyChallengeManager: ObservableObject {
     public static let shared = DailyChallengeManager()
+    public static let appGroupSuiteName = "group.tygon.org.echogrid"
+
+    private var sharedDefaults: UserDefaults {
+        UserDefaults(suiteName: Self.appGroupSuiteName) ?? UserDefaults.standard
+    }
 
     private let storageKey = "echo_grid_daily_history_v1"
     private let streakKey = "echo_grid_daily_streak_v1"
@@ -19,18 +24,28 @@ public final class DailyChallengeManager: ObservableObject {
     @Published public private(set) var currentStreak: Int = 0
     @Published public private(set) var maxStreak: Int = 0
 
+    public static var utcCalendar: Calendar {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: "UTC") ?? TimeZone(secondsFromGMT: 0)!
+        return cal
+    }
+
+    public static var utcDateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(identifier: "UTC") ?? TimeZone(secondsFromGMT: 0)!
+        return formatter
+    }
+
     private init() {
-        self.history = Self.loadHistory(key: storageKey)
-        self.currentStreak = UserDefaults.standard.integer(forKey: streakKey)
-        self.maxStreak = UserDefaults.standard.integer(forKey: maxStreakKey)
+        self.history = Self.loadHistory(key: storageKey, sharedDefaults: UserDefaults(suiteName: Self.appGroupSuiteName) ?? .standard)
+        self.currentStreak = (UserDefaults(suiteName: Self.appGroupSuiteName) ?? .standard).integer(forKey: streakKey)
+        self.maxStreak = (UserDefaults(suiteName: Self.appGroupSuiteName) ?? .standard).integer(forKey: maxStreakKey)
         recalculateStreak()
     }
 
     public var todayDateKey: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone.current
-        return formatter.string(from: Date())
+        Self.utcDateFormatter.string(from: Date())
     }
 
     public var isTodayCompleted: Bool {
@@ -77,20 +92,28 @@ public final class DailyChallengeManager: ObservableObject {
     }
 
     private func recalculateStreak() {
-        let calendar = Calendar.current
-        var checkDate = Date()
+        let calendar = Self.utcCalendar
+        let formatter = Self.utcDateFormatter
+
+        let now = Date()
+        let todayStr = formatter.string(from: now)
         var streak = 0
 
-        // If today is completed, start streak at 1 and look backwards
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-
-        let todayStr = formatter.string(from: checkDate)
+        var checkDate: Date
         if history[todayStr]?.isCompleted == true {
             streak += 1
-            if let yesterday = calendar.date(byAdding: .day, value: -1, to: checkDate) {
-                checkDate = yesterday
+            guard let yesterday = calendar.date(byAdding: .day, value: -1, to: now) else {
+                updateStreakValues(streak: streak)
+                return
             }
+            checkDate = yesterday
+        } else {
+            // Today is not completed yet; check if yesterday was completed to keep the streak alive
+            guard let yesterday = calendar.date(byAdding: .day, value: -1, to: now) else {
+                updateStreakValues(streak: streak)
+                return
+            }
+            checkDate = yesterday
         }
 
         // Loop backwards for consecutive completed days
@@ -105,11 +128,17 @@ public final class DailyChallengeManager: ObservableObject {
             }
         }
 
+        updateStreakValues(streak: streak)
+    }
+
+    private func updateStreakValues(streak: Int) {
         self.currentStreak = streak
         if streak > maxStreak {
             self.maxStreak = streak
+            sharedDefaults.set(maxStreak, forKey: maxStreakKey)
             UserDefaults.standard.set(maxStreak, forKey: maxStreakKey)
         }
+        sharedDefaults.set(currentStreak, forKey: streakKey)
         UserDefaults.standard.set(currentStreak, forKey: streakKey)
     }
 
@@ -120,14 +149,16 @@ public final class DailyChallengeManager: ObservableObject {
     private func saveHistory() {
         do {
             let data = try JSONEncoder().encode(history)
+            sharedDefaults.set(data, forKey: storageKey)
             UserDefaults.standard.set(data, forKey: storageKey)
         } catch {
             print("Failed to save daily history: \(error)")
         }
     }
 
-    private static func loadHistory(key: String) -> [String: DailyChallengeRecord] {
-        guard let data = UserDefaults.standard.data(forKey: key) else {
+    private static func loadHistory(key: String, sharedDefaults: UserDefaults) -> [String: DailyChallengeRecord] {
+        let data = sharedDefaults.data(forKey: key) ?? UserDefaults.standard.data(forKey: key)
+        guard let data = data else {
             return [:]
         }
         do {

@@ -128,4 +128,109 @@ public struct ResonanceFingerprintGenerator {
             "DEDUCTION THROUGH SENSATION".draw(at: CGPoint(x: 36, y: 350), withAttributes: footerAttributes)
         }
     }
+
+    /// Renders a 9:16 high-resolution vertical card for Instagram Stories, TikTok, and YouTube Shorts
+    @MainActor
+    public static func generateVerticalStoryCardImage(
+        title: String,
+        moves: Int,
+        parMoves: Int,
+        stars: Int,
+        timeSec: Double
+    ) -> UIImage {
+        let width: CGFloat = 540
+        let height: CGFloat = 960
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: width, height: height))
+
+        return renderer.image { ctx in
+            let rect = CGRect(x: 0, y: 0, width: width, height: height)
+
+            // Dark Gradient Background
+            let colors = [UIColor(white: 0.05, alpha: 1.0).cgColor, UIColor(white: 0.12, alpha: 1.0).cgColor]
+            let colorSpace = CGColorSpaceCreateDeviceRGB()
+            if let gradient = CGGradient(colorsSpace: colorSpace, colors: colors as CFArray, locations: [0.0, 1.0]) {
+                ctx.cgContext.drawLinearGradient(gradient, start: CGPoint(x: width / 2, y: 0), end: CGPoint(x: width / 2, y: height), options: [])
+            }
+
+            // Outer Card
+            let cardRect = rect.insetBy(dx: 30, dy: 60)
+            let cardPath = UIBezierPath(roundedRect: cardRect, cornerRadius: 28)
+            UIColor(white: 0.14, alpha: 0.9).setFill()
+            cardPath.fill()
+            UIColor.cyan.withAlphaComponent(0.5).setStroke()
+            cardPath.lineWidth = 2.5
+            cardPath.stroke()
+
+            // Header Glow
+            let brandAttributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.monospacedSystemFont(ofSize: 22, weight: .black),
+                .foregroundColor: UIColor.cyan
+            ]
+            "ECHO GRID".draw(at: CGPoint(x: 60, y: 100), withAttributes: brandAttributes)
+
+            let titleAttributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.monospacedSystemFont(ofSize: 16, weight: .bold),
+                .foregroundColor: UIColor.white
+            ]
+            title.draw(at: CGPoint(x: 60, y: 135), withAttributes: titleAttributes)
+
+            // Dynamic Waveform Resonance Visualization
+            let waveCenterY: CGFloat = 460
+            let wavePath = UIBezierPath()
+            wavePath.move(to: CGPoint(x: 60, y: waveCenterY))
+
+            let wavePoints = 120
+            for i in 0...wavePoints {
+                let progress = Double(i) / Double(wavePoints)
+                let x = 60.0 + progress * 420.0
+                let envelope = sin(progress * .pi)
+                let freq = Double(stars * 4)
+                let y = waveCenterY + sin(progress * .pi * freq) * 70.0 * envelope
+                wavePath.addLine(to: CGPoint(x: x, y: y))
+            }
+
+            UIColor.cyan.setStroke()
+            wavePath.lineWidth = 4
+            wavePath.stroke()
+
+            // Harmonic Nodes along the wave
+            let nodePositions = [0.25, 0.5, 0.75]
+            for frac in nodePositions {
+                let nodeX = 60.0 + frac * 420.0
+                let nodePath = UIBezierPath(arcCenter: CGPoint(x: nodeX, y: waveCenterY), radius: 8, startAngle: 0, endAngle: .pi * 2, clockwise: true)
+                UIColor.white.setFill()
+                nodePath.fill()
+            }
+
+            // Solved Stars
+            var starText = ""
+            for _ in 0..<stars { starText += "★ " }
+            let starAttributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 34),
+                .foregroundColor: UIColor.systemYellow
+            ]
+            starText.draw(at: CGPoint(x: 60, y: 640), withAttributes: starAttributes)
+
+            // Solve Metrics
+            let statsText = "MOVES: \(moves) / PAR \(parMoves)  •  TIME: \(String(format: "%.1fs", timeSec))"
+            let statsAttributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.monospacedSystemFont(ofSize: 16, weight: .semibold),
+                .foregroundColor: UIColor.lightGray
+            ]
+            statsText.draw(at: CGPoint(x: 60, y: 700), withAttributes: statsAttributes)
+
+            // Tagline & Call-to-action
+            let ctaAttributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.monospacedSystemFont(ofSize: 14, weight: .bold),
+                .foregroundColor: UIColor.cyan.withAlphaComponent(0.8)
+            ]
+            "FEEL THE RESONANCE  •  #EchoGrid".draw(at: CGPoint(x: 60, y: 780), withAttributes: ctaAttributes)
+
+            let footerAttributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 12, weight: .regular),
+                .foregroundColor: UIColor.gray
+            ]
+            "Available on iOS • Zero Audio Lag • Pure Core Haptics".draw(at: CGPoint(x: 60, y: 820), withAttributes: footerAttributes)
+        }
+    }
 }

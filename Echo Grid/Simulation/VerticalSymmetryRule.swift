@@ -28,24 +28,22 @@ public struct VerticalSymmetryRule: RuleEvaluator, Sendable {
         // Maximum possible Manhattan distance across a 5x5 grid is (5-1) + (5-1) = 8
         let maxDistance: Double = Double((board.size - 1) * 2)
 
-        // Find optimal assignment of movable nodes to target positions
-        // For 3 nodes, evaluate best matching permutations
         var totalScoreSum: Double = 0.0
         var matchedCount = 0
 
-        var remainingTargets = targetPositions
-        for movable in movables {
-            guard !remainingTargets.isEmpty else { break }
+        var remainingMovables = movables
+        for target in targetPositions {
+            guard !remainingMovables.isEmpty else { break }
 
-            // Find closest target
+            // Find closest movable to this target
             var minDistance = Int.max
-            var bestTargetIndex = 0
+            var bestMovableIndex = 0
 
-            for (index, target) in remainingTargets.enumerated() {
+            for (index, movable) in remainingMovables.enumerated() {
                 let dist = movable.position.manhattanDistance(to: target)
                 if dist < minDistance {
                     minDistance = dist
-                    bestTargetIndex = index
+                    bestMovableIndex = index
                 }
             }
 
@@ -57,7 +55,7 @@ public struct VerticalSymmetryRule: RuleEvaluator, Sendable {
                 totalScoreSum += proximity
             }
 
-            remainingTargets.remove(at: bestTargetIndex)
+            remainingMovables.remove(at: bestMovableIndex)
         }
 
         let normalizedScore = totalScoreSum / Double(sources.count)

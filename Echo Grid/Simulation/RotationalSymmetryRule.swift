@@ -1,16 +1,16 @@
 //
-//  HorizontalSymmetryRule.swift
+//  RotationalSymmetryRule.swift
 //  Echo Grid
 //
 
 import Foundation
 
-public struct HorizontalSymmetryRule: RuleEvaluator, Sendable {
+public struct RotationalSymmetryRule: RuleEvaluator, Sendable {
     public let id: String
     public let weight: Double
 
     public init(weight: Double = 1.0) {
-        self.id = "rule.horizontal_symmetry"
+        self.id = "rule.rotational_symmetry"
         self.weight = weight
     }
 
@@ -22,10 +22,9 @@ public struct HorizontalSymmetryRule: RuleEvaluator, Sendable {
             return RuleEvaluation(ruleId: id, score: 1.0, isSatisfied: true, detailNotes: "No source nodes")
         }
 
-        // Expected mirrored target positions across horizontal axis (row = 2)
-        // For (r, c), mirrored row is (board.size - 1) - r
+        // Expected 180-degree rotational target positions: (r, c) -> (4 - r, 4 - c)
         let targetPositions = sources.map {
-            CellPosition(row: (board.size - 1) - $0.position.row, col: $0.position.col)
+            CellPosition(row: (board.size - 1) - $0.position.row, col: (board.size - 1) - $0.position.col)
         }
 
         let maxDistance: Double = Double((board.size - 1) * 2)
@@ -66,7 +65,7 @@ public struct HorizontalSymmetryRule: RuleEvaluator, Sendable {
             ruleId: id,
             score: isSolved ? 1.0 : normalizedScore,
             isSatisfied: isSolved,
-            detailNotes: "\(matchedCount)/\(sources.count) nodes horizontally mirrored"
+            detailNotes: "\(matchedCount)/\(sources.count) nodes rotationally balanced"
         )
     }
 }

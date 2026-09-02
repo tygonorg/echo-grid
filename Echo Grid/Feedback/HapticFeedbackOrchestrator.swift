@@ -41,6 +41,16 @@ public final class HapticFeedbackOrchestrator {
                     }
                 }
             }
+            hapticEngine?.stoppedHandler = { [weak self] reason in
+                print("Core Haptics engine stopped with reason: \(reason)")
+                Task { @MainActor in
+                    do {
+                        try self?.hapticEngine?.start()
+                    } catch {
+                        print("Failed to restart Core Haptics engine after stop: \(error)")
+                    }
+                }
+            }
             try hapticEngine?.start()
         } catch {
             print("Core Haptics not available on this device: \(error)")

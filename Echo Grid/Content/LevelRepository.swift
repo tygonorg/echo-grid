@@ -249,6 +249,8 @@ public struct LevelRepository: Sendable {
             parMoves: 6,
             parTimeSec: 70.0,
             initialBoard: BoardState(size: 5, nodes: [
+                NodeState(id: "S1", type: .source, position: CellPosition(row: 0, col: 1)),
+                NodeState(id: "S2", type: .source, position: CellPosition(row: 4, col: 1)),
                 NodeState(id: "B1", type: .blocker, position: CellPosition(row: 0, col: 0)),
                 NodeState(id: "B2", type: .blocker, position: CellPosition(row: 4, col: 4)),
                 NodeState(id: "M1", type: .receiver, position: CellPosition(row: 1, col: 2)),
@@ -256,7 +258,7 @@ public struct LevelRepository: Sendable {
                 NodeState(id: "M3", type: .receiver, position: CellPosition(row: 2, col: 4)),
                 NodeState(id: "M4", type: .receiver, position: CellPosition(row: 3, col: 2))
             ]),
-            ruleEvaluators: [VerticalSymmetryRule(), HorizontalSymmetryRule()]
+            ruleEvaluators: [VerticalSymmetryRule(), CollinearAlignmentRule()]
         ))
 
         // Level 13: Echo Chamber
@@ -292,11 +294,11 @@ public struct LevelRepository: Sendable {
             parTimeSec: 85.0,
             initialBoard: BoardState(size: 5, nodes: [
                 NodeState(id: "B1", type: .blocker, position: CellPosition(row: 2, col: 2)),
-                NodeState(id: "S1", type: .source, position: CellPosition(row: 0, col: 2)),
-                NodeState(id: "S2", type: .source, position: CellPosition(row: 2, col: 0)),
-                NodeState(id: "M1", type: .receiver, position: CellPosition(row: 1, col: 4)),
+                NodeState(id: "S1", type: .source, position: CellPosition(row: 0, col: 1)),
+                NodeState(id: "S2", type: .source, position: CellPosition(row: 1, col: 0)),
+                NodeState(id: "M1", type: .receiver, position: CellPosition(row: 1, col: 2)),
                 NodeState(id: "M2", type: .receiver, position: CellPosition(row: 3, col: 2)),
-                NodeState(id: "M3", type: .receiver, position: CellPosition(row: 4, col: 1)),
+                NodeState(id: "M3", type: .receiver, position: CellPosition(row: 4, col: 3)),
                 NodeState(id: "M4", type: .receiver, position: CellPosition(row: 0, col: 4))
             ]),
             ruleEvaluators: [VerticalSymmetryRule(), HorizontalSymmetryRule()]
@@ -312,14 +314,14 @@ public struct LevelRepository: Sendable {
             parMoves: 8,
             parTimeSec: 90.0,
             initialBoard: BoardState(size: 5, nodes: [
-                NodeState(id: "B1", type: .blocker, position: CellPosition(row: 0, col: 4)),
-                NodeState(id: "B2", type: .blocker, position: CellPosition(row: 4, col: 0)),
+                NodeState(id: "B1", type: .blocker, position: CellPosition(row: 1, col: 2)),
+                NodeState(id: "B2", type: .blocker, position: CellPosition(row: 3, col: 2)),
                 NodeState(id: "S1", type: .source, position: CellPosition(row: 0, col: 0)),
-                NodeState(id: "S2", type: .source, position: CellPosition(row: 2, col: 1)),
-                NodeState(id: "S3", type: .source, position: CellPosition(row: 4, col: 4)),
+                NodeState(id: "S2", type: .source, position: CellPosition(row: 2, col: 0)),
+                NodeState(id: "S3", type: .source, position: CellPosition(row: 4, col: 0)),
                 NodeState(id: "M1", type: .receiver, position: CellPosition(row: 1, col: 3)),
                 NodeState(id: "M2", type: .receiver, position: CellPosition(row: 3, col: 3)),
-                NodeState(id: "M3", type: .receiver, position: CellPosition(row: 2, col: 4))
+                NodeState(id: "M3", type: .receiver, position: CellPosition(row: 2, col: 1))
             ]),
             ruleEvaluators: [VerticalSymmetryRule(), CollinearAlignmentRule()]
         ))
